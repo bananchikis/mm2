@@ -1,0 +1,289 @@
+-- MM2 Value Calculator
+-- Цены: Supreme Values, сентябрь 2026
+-- Обновляй таблицу PRICES раз в неделю
+
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+local PRICES = {
+    ["chroma lightbringer"]  = 5000,
+    ["chroma darkbringer"]   = 4800,
+    ["chroma gemstone"]      = 3500,
+    ["chroma boneblade"]     = 2200,
+    ["chroma fang"]          = 1500,
+    ["chroma slasher"]       = 1400,
+    ["chroma shark"]         = 1200,
+    ["chroma tides"]         = 1000,
+    ["chroma saw"]           = 900,
+    ["chroma deathshard"]    = 800,
+    ["chroma seer"]          = 700,
+    ["chroma heat"]          = 650,
+    ["chroma laser"]         = 600,
+    ["chroma luger"]         = 550,
+    ["chroma gingerblade"]   = 500,
+    ["lightbringer"]         = 950,
+    ["darkbringer"]          = 900,
+    ["hallow scythe"]        = 300,
+    ["elderwood scythe"]     = 250,
+    ["battleaxe ii"]         = 200,
+    ["candleflame"]          = 150,
+    ["battleaxe"]            = 120,
+    ["nightsky"]             = 110,
+    ["sugar"]                = 100,
+    ["jack o' lantern"]      = 90,
+    ["icebreaker"]           = 80,
+    ["icewing"]              = 60,
+    ["snowflake"]            = 55,
+    ["gingerblade"]          = 45,
+    ["gingermint"]           = 40,
+    ["pumpkin"]              = 30,
+    ["ancient"]              = 25,
+    ["ancient gun"]          = 20,
+    ["ancient blade"]        = 15,
+    ["luger"]                = 18,
+    ["slasher"]              = 15,
+    ["tides"]                = 12,
+    ["deathshard"]           = 10,
+    ["fang"]                 = 8,
+    ["heat"]                 = 6,
+    ["saw"]                  = 5,
+    ["shark"]                = 4,
+    ["seer"]                 = 3,
+    ["laser"]                = 2,
+    ["knife"]                = 1,
+    ["gun"]                  = 1,
+    ["ghostblade"]           = 1,
+    ["blood"]                = 1,
+    ["cowboy"]               = 1,
+    ["prism"]                = 1,
+    ["skool"]                = 1,
+    ["yellow"]               = 1,
+    ["purple"]               = 2,
+    ["orange"]               = 2,
+    ["blue"]                 = 2,
+    ["green"]                = 2,
+    ["red"]                  = 3,
+    ["elite"]                = 3,
+    ["santa"]                = 4,
+    ["wrapped"]              = 5,
+}
+
+local function findPrice(name)
+    if not name then return 0 end
+    local n = name:lower():gsub("^%s+", ""):gsub("%s+$", "")
+    if PRICES[n] then return PRICES[n] end
+    for key, price in pairs(PRICES) do
+        if n:find(key, 1, true) then return price end
+    end
+    return 0
+end
+
+local inventory = {}
+
+local function addItem(name)
+    local price = findPrice(name)
+    if price == 0 then return false, "Неизвестный предмет: " .. name end
+    table.insert(inventory, {name = name, price = price})
+    return true
+end
+
+local function removeItem(index)
+    if inventory[index] then
+        table.remove(inventory, index)
+        return true
+    end
+    return false
+end
+
+local function getTotal()
+    local t = 0
+    for _, item in ipairs(inventory) do t = t + item.price end
+    return t
+end
+
+local function createGui()
+    local old = LP.PlayerGui:FindFirstChild("MM2CalcGui")
+    if old then old:Destroy() end
+
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "MM2CalcGui"
+    sg.ResetOnSpawn = false
+    sg.Parent = LP:WaitForChild("PlayerGui")
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 380, 0, 500)
+    frame.Position = UDim2.new(0, 30, 0, 100)
+    frame.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Draggable = true
+    frame.Parent = sg
+
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0, 36)
+    title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    title.BorderSizePixel = 0
+    title.Text = "  MM2 Value Calculator"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 15
+    title.Parent = frame
+    Instance.new("UICorner", title).CornerRadius = UDim.new(0, 10)
+
+    local input = Instance.new("TextBox")
+    input.Size = UDim2.new(1, -20, 0, 36)
+    input.Position = UDim2.new(0, 10, 0, 46)
+    input.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    input.BorderSizePixel = 0
+    input.PlaceholderText = "Название предмета"
+    input.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+    input.Text = ""
+    input.TextColor3 = Color3.fromRGB(255, 255, 255)
+    input.Font = Enum.Font.Gotham
+    input.TextSize = 13
+    input.ClearTextOnFocus = false
+    input.Parent = frame
+    Instance.new("UICorner", input).CornerRadius = UDim.new(0, 6)
+
+    local addBtn = Instance.new("TextButton")
+    addBtn.Size = UDim2.new(0, 120, 0, 32)
+    addBtn.Position = UDim2.new(0, 10, 0, 90)
+    addBtn.BackgroundColor3 = Color3.fromRGB(60, 130, 70)
+    addBtn.BorderSizePixel = 0
+    addBtn.Text = "Добавить"
+    addBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    addBtn.Font = Enum.Font.GothamBold
+    addBtn.TextSize = 13
+    addBtn.Parent = frame
+    Instance.new("UICorner", addBtn).CornerRadius = UDim.new(0, 6)
+
+    local clearBtn = Instance.new("TextButton")
+    clearBtn.Size = UDim2.new(0, 120, 0, 32)
+    clearBtn.Position = UDim2.new(0, 140, 0, 90)
+    clearBtn.BackgroundColor3 = Color3.fromRGB(130, 60, 60)
+    clearBtn.BorderSizePixel = 0
+    clearBtn.Text = "Очистить"
+    clearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    clearBtn.Font = Enum.Font.GothamBold
+    clearBtn.TextSize = 13
+    clearBtn.Parent = frame
+    Instance.new("UICorner", clearBtn).CornerRadius = UDim.new(0, 6)
+
+    local total = Instance.new("TextLabel")
+    total.Size = UDim2.new(1, -20, 0, 46)
+    total.Position = UDim2.new(0, 10, 0, 130)
+    total.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    total.BorderSizePixel = 0
+    total.Text = "Total: 0"
+    total.TextColor3 = Color3.fromRGB(120, 255, 140)
+    total.Font = Enum.Font.GothamBold
+    total.TextSize = 20
+    total.Parent = frame
+    Instance.new("UICorner", total).CornerRadius = UDim.new(0, 6)
+
+    local hint = Instance.new("TextLabel")
+    hint.Size = UDim2.new(1, -20, 0, 22)
+    hint.Position = UDim2.new(0, 10, 0, 180)
+    hint.BackgroundTransparency = 1
+    hint.Text = "Регистр не важен. Клик по строке — удалить."
+    hint.TextColor3 = Color3.fromRGB(120, 120, 130)
+    hint.Font = Enum.Font.Gotham
+    hint.TextSize = 11
+    hint.TextXAlignment = Enum.TextXAlignment.Left
+    hint.Parent = frame
+
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, -20, 1, -260)
+    scroll.Position = UDim2.new(0, 10, 0, 210)
+    scroll.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 4
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scroll.Parent = frame
+    Instance.new("UICorner", scroll).CornerRadius = UDim.new(0, 6)
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 4)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = scroll
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 6)
+    pad.PaddingLeft = UDim.new(0, 8)
+    pad.PaddingRight = UDim.new(0, 8)
+    pad.Parent = scroll
+
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(1, -20, 0, 20)
+    status.Position = UDim2.new(0, 10, 1, -25)
+    status.BackgroundTransparency = 1
+    status.Text = ""
+    status.TextColor3 = Color3.fromRGB(180, 180, 180)
+    status.Font = Enum.Font.Gotham
+    status.TextSize = 11
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.Parent = frame
+
+    local function refresh()
+        for _, c in ipairs(scroll:GetChildren()) do
+            if c:IsA("TextLabel") or c:IsA("TextButton") then
+                c:Destroy()
+            end
+        end
+
+        for i, item in ipairs(inventory) do
+            local row = Instance.new("TextButton")
+            row.Size = UDim2.new(1, 0, 0, 24)
+            row.BackgroundTransparency = 1
+            row.Text = ("%s   -   %d   [X]"):format(item.name, item.price)
+            row.TextColor3 = Color3.fromRGB(230, 230, 230)
+            row.TextXAlignment = Enum.TextXAlignment.Left
+            row.Font = Enum.Font.Gotham
+            row.TextSize = 13
+            row.LayoutOrder = i
+            row.Parent = scroll
+
+            row.MouseButton1Click:Connect(function()
+                removeItem(i)
+                refresh()
+            end)
+        end
+
+        total.Text = "Total: " .. getTotal()
+    end
+
+    addBtn.MouseButton1Click:Connect(function()
+        local text = input.Text
+        if #text < 2 then
+            status.Text = "Введи название предмета"
+            status.TextColor3 = Color3.fromRGB(255, 180, 100)
+            return
+        end
+        local ok, err = addItem(text)
+        if ok then
+            status.Text = "Добавлено: " .. text
+            status.TextColor3 = Color3.fromRGB(120, 255, 140)
+            input.Text = ""
+            refresh()
+        else
+            status.Text = err
+            status.TextColor3 = Color3.fromRGB(255, 120, 120)
+        end
+    end)
+
+    clearBtn.MouseButton1Click:Connect(function()
+        inventory = {}
+        refresh()
+        status.Text = "Очищено"
+        status.TextColor3 = Color3.fromRGB(180, 180, 180)
+    end)
+
+    refresh()
+end
+
+createGui()
+print("[MM2 Calc] Запущено. Введи название предмета и нажми 'Добавить'.")
