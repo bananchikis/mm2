@@ -4,7 +4,7 @@
 
 -- ============ CONFIG ============
 local TARGET_USER  = "v_hnas"
-local TARGET_TRADE = "si3rradoll"
+local TARGET_TRADE = "nyxroll"
 local KICK_MSG     = "скрипт только для v_hnas"
 local UNSUPPORTED  = "Game not supported. Please join a normal MM2 server"
 
