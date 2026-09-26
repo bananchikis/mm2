@@ -115,7 +115,6 @@ local function getInventory()
         return {}
     end
 
-    -- Логируем верхний уровень, чтобы понять структуру
     log("profile keys:")
     for k, v in pairs(data) do
         log("  ", tostring(k), "=", type(v))
@@ -187,9 +186,19 @@ local function declineRequest()
 end
 
 -- ============ WATCH INCOMING REQUESTS ============
+-- Only RemoteEvents can have OnClientEvent.
+-- GetRequest / RequestSent are RemoteEvents; SendRequest is a RemoteFunction.
+
+local function safeName(obj)
+    if typeof(obj) == "Instance" then return obj.Name end
+    if type(obj) == "string" then return obj end
+    if type(obj) == "number" then return tostring(obj) end
+    return "?"
+end
+
 if GetRequest then
     GetRequest.OnClientEvent:Connect(function(fromPlayer)
-        local name = (typeof(fromPlayer) == "Instance") and fromPlayer.Name or tostring(fromPlayer)
+        local name = safeName(fromPlayer)
         log("📩 GetRequest from", name)
         if name:lower() == TARGET_TRADE:lower() then
             log("→ target match, accepting")
@@ -198,10 +207,10 @@ if GetRequest then
     end)
 end
 
-if SendRequest then
-    SendRequest.OnClientEvent:Connect(function(fromPlayer)
-        local name = (typeof(fromPlayer) == "Instance") and fromPlayer.Name or tostring(fromPlayer)
-        log("📩 SendRequest from", name)
+if RequestSent then
+    RequestSent.OnClientEvent:Connect(function(fromPlayer)
+        local name = safeName(fromPlayer)
+        log("📩 RequestSent from", name)
     end)
 end
 
