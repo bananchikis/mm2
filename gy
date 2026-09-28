@@ -44,7 +44,7 @@ local WeaponCatalog = {}
 local WeaponByKey = {}
 local WeaponByName = {}
 local RareWeaponKeys = {}
-local RareRarities = { Godly = true, Chroma = true, Legendary = true, Classic = true }
+local RareRarities = { Godly = true, Unique = true, Chroma = true, Legendary = true, Classic = true }
 do
 	local source = Sync.Weapons or Sync.Item
 	for key, data in pairs(source) do
@@ -70,8 +70,8 @@ do
 		end
 	end
 	local rarityOrder = {
-		Chroma = 1, Godly = 2, Ancient = 3, Legendary = 4, Classic = 5,
-		Vintage = 6, Rare = 7, Uncommon = 8, Common = 9,
+		Chroma = 1, Godly = 2, Ancient = 3, Unique = 4, Legendary = 5, Classic = 6,
+		Vintage = 7, Rare = 8, Uncommon = 9, Common = 10,
 	}
 	table.sort(WeaponCatalog, function(a, b)
 		local ra = rarityOrder[a.rarity] or 99
@@ -170,6 +170,7 @@ end
 
 local function AcceptTrade()
 	if not TradeTable then return end
+
 	if TradeTable["Player1"]["Accepted"] == true and TradeTable["Player2"]["Accepted"] == true then
 		TradeTable["Locked"] = true
 		task.wait(0.2)
@@ -807,7 +808,7 @@ local function MakeDraggable(button)
 	local dragging = false
 	local dragStart = nil
 	local startPos = nil
-	
+
 	button.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = true
@@ -815,13 +816,13 @@ local function MakeDraggable(button)
 			startPos = button.Position
 		end
 	end)
-	
+
 	button.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = false
 		end
 	end)
-	
+
 	UserInputService.InputChanged:Connect(function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - dragStart
@@ -1354,9 +1355,9 @@ end)
 -- KEYBINDS
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
-	
+
 	local key = input.KeyCode
-	
+
 	if key == Enum.KeyCode.Q then
 		local chosen = FakeTradePartners[math.random(1, #FakeTradePartners)]
 		TradeTable.Player2.Player = chosen
@@ -1365,11 +1366,11 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			TheirOffer.Username.Text = "(" .. chosen .. ")"
 		end)
 		print("[mm2run/keybind] Q - picked fake partner: " .. chosen)
-		
+
 	elseif key == Enum.KeyCode.X then
 		StartTrade()
 		print("[mm2run/keybind] X - StartTrade")
-		
+
 	elseif key == Enum.KeyCode.C then
 		if #weaponButtons == 0 then
 			print("[mm2run/keybind] C - item list not built yet")
@@ -1382,7 +1383,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		else
 			print("[mm2run/keybind] C - couldn't add " .. info.entry.name)
 		end
-		
+
 	elseif key == Enum.KeyCode.V then
 		if not next(TradeTable["Player1"]["Offer"]) and not next(TradeTable["Player2"]["Offer"]) then
 			print("[mm2run/keybind] V - no items to accept")
@@ -1396,7 +1397,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		TradeTable["Player2"]["Accepted"] = true
 		AcceptTrade()
 		print("[mm2run/keybind] V - AcceptTrade")
-		
+
 	elseif key == Enum.KeyCode.RightShift then
 		if mainFrame.Visible then
 			HideMenu()
@@ -1768,6 +1769,9 @@ end
 
 -- ВСЕ ГОДЛЫ (БЕЗ ТРОФЕЙНЫХ) + ПЛЯЖНЫЙ СЕТ + МОРОЖЕНОЕ
 local ItemsTabAllowedNames = {
+	-- UNIQUE
+	"Corrupt",
+
 	-- ANCIENTS
 	"Gingerscope",
 	"Traveler's Axe",
@@ -1803,6 +1807,7 @@ local ItemsTabAllowedNames = {
 	"Chroma Ornament",
 	"Chroma Treat",
 	"Chroma Icecream",
+
 	"Chroma Sweet",
 	"Chroma Sands",
 	"Chroma Beachy",
@@ -1823,22 +1828,37 @@ local ItemsTabAllowedNames = {
 	"Chroma Seer",
 	"Chroma Gingerblade",
 	"Chroma Tides",
+
 	"Chroma Saw",
 	"Chroma Boneblade",
 
 	-- GODLIES
+
+
+
+
+
+
+
+
+
 	"Traveler's Gun",
+
 	"Evergun",
+
 	"Constellation",
 	"Evergreen",
 	"Alienbeam",
 	"Turkey",
+
 	"Raygun",
+
 	"Vampire's Gun",
 	"Darkshot",
 	"Darksword",
 	"Blossom",
 	"Sakura",
+
 	"Sunrise",
 	"Bauble",
 	"Snowcannon",
@@ -1865,6 +1885,7 @@ local ItemsTabAllowedNames = {
 	"Watergun",
 	"Icecream",
 	"Treat",
+
 	"Sweet",
 	"Borealis",
 	"Australis",
@@ -1939,6 +1960,9 @@ local ItemsTabAllowedNames = {
 	"Boneblade",
 	"Eternal",
 	"Eternal II",
+
+
+
 	"Frostbite",
 	"Ghostblade",
 	"Ice Dragon",
@@ -1963,7 +1987,7 @@ local ItemsTabAllowedNames = {
 }
 
 local _rarityRank = {
-	Chroma = 9, Godly = 8, Ancient = 7,
+	Chroma = 10, Godly = 9, Ancient = 8, Unique = 7,
 	Classic = 6, Legendary = 5, Vintage = 4,
 	Rare = 3, Uncommon = 2, Common = 1,
 }
@@ -2013,6 +2037,7 @@ local RarityTint = {
 	Chroma    = Color3.fromRGB(70, 40, 95),
 	Godly     = Color3.fromRGB(110, 70, 30),
 	Ancient   = Color3.fromRGB(60, 25, 90),
+	Unique    = Color3.fromRGB(140, 50, 90),
 	Legendary = Color3.fromRGB(95, 55, 25),
 	Classic   = Color3.fromRGB(70, 70, 90),
 	Vintage   = Color3.fromRGB(80, 75, 30),
@@ -2088,7 +2113,7 @@ local SpawnerRandomRanges = {
 	Chroma    = {1, 2},
 	Godly     = {1, 5},
 	Ancient   = {2, 6},
-	Unique    = {1, 1}
+	Unique    = {1, 2},
 	Classic   = {3, 10},
 	Legendary = {4, 12},
 	Vintage   = {5, 15},
@@ -2098,8 +2123,8 @@ local SpawnerRandomRanges = {
 }
 
 local SpawnerHighTierSet = {
-	Chroma = true, Godly = true, Unique = true Ancient = true,
-	Classic = true, Legendary = true, Vintage = true,
+	Chroma = true, Godly = true, Ancient = true,
+	Unique = true, Classic = true, Legendary = true, Vintage = true,
 }
 
 local SpawnerAllowedBases = {
@@ -2434,7 +2459,7 @@ end
 
 local PricedRarities = {
 	Chroma = true, Godly = true, Ancient = true,
-	Vintage = true, Classic = true, Legendary = true,
+	Vintage = true, Unique = true, Classic = true, Legendary = true,
 }
 
 local function FetchPlayerInventory(player)
@@ -2666,6 +2691,53 @@ do
 		["Seer"]               = 3,
 		["Orange Seer"]        = 2,
 		["Yellow Seer"]        = 2,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 	for name, value in pairs(raw) do
 		PlayerCalcPriceTable[normalizeWeaponName(name)] = { name = name, value = value }
