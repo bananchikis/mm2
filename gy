@@ -2089,6 +2089,7 @@ local SpawnerRandomRanges = {
 	Chroma    = {1, 2},
 	Godly     = {1, 5},
 	Ancient   = {2, 6},
+	Unique    = {0, 0}
 	Classic   = {3, 10},
 	Legendary = {4, 12},
 	Vintage   = {5, 15},
