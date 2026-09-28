@@ -2099,7 +2099,7 @@ local SpawnerRandomRanges = {
 }
 
 local SpawnerHighTierSet = {
-	Chroma = true, Godly = true, Unique = false Ancient = true,
+	Chroma = true, Godly = true, Unique = true Ancient = true,
 	Classic = true, Legendary = true, Vintage = true,
 }
 
