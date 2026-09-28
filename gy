@@ -2108,39 +2108,64 @@ local SpawnerHighTierSet = {
 }
 
 local SpawnerAllowedBases = {
--- GODLIES
-		"Traveler's Gun", "Evergun", "Constellation", "Evergreen", 
-		"Alienbeam", "Turkey", "Raygun", "Vampire's Gun", 
-		"Darkshot", "Darksword", "Blossom", "Sakura", "Sunrise", 
-		"Bauble", "Snowcannon", "Soul", "Sunset", "Spirit", 
-		"Rainbow Gun", "Flora", "Rainbow", "Xenoknife", "Xenoshot", 
-		"Bloom", "Batwing", "Black Luger", "Heart Wand", "Blizzard", 
-		"Snowstorm", "Ocean", "Waves", "Flowerwood Gun", "Flowerwood", 
-		"Snow Dagger", "Watergun", "Icecream", "Treat", "Sweet", 
-		"Borealis", "Australis", "Bat", "Beachy", "Sands", 
-		"Pearlshine", "Candy", "Ornament", "Pearl", "Heartblade", 
-		"Phantom", "Red Luger", "Spectre", "Candleflame", "Darkbringer", 
-		"Lightbringer", "Sugar", "Green Luger", "Amerilaser", "Laser", 
-		"Hallowgun", "Nightblade", "Shark", "Icebeam", "Old Glory", 
-		"Plasmablade", "Slasher", "Vampire's Edge", "Lugercane", "Minty", 
-		"Nebula", "Virtual", "BattleAxe", "Gingermint", "Swirly Blade", 
-		"Chill", "Clockwork", "Fang", "Frostsaber", "Heat", "Spider", 
-		"Tides", "Bioblade", "Eternal III", "Eternal IV", "Hallow's Blade", 
-		"Hallow's Edge", "Handsaw", "Boneblade", "Eternal", "Eternal II", 
-		"Frostbite", "Ghostblade", "Ice Dragon", "Ice Shard", "Prismatic", 
-		"Pumpking", "Saw", "Xmas", "Eggblade", "Flames", "Snowflake", 
-		"Winter's Edge", "Peppermint", "Cookieblade", "Blue Seer", 
-		"Purple Seer", "Red Seer", "Seer", "Orange Seer", "Yellow Seer",
-		"Corrupt", "Gingerscope", "Traveler's Axe", "Celestial", 
-		"Vampire's Axe", "Harvester", "Icepiercer","C. Traveler's Gun", 
-		"Chroma Evergun", "Chroma Evergreen", "Chroma Bauble",
-		"C. Constellation", "C. Vampire's Gun", 
-		"Chroma Alienbeam", "Chroma Raygun", "Chroma Sunrise", 
-		"Chroma Sunset", "Chroma Beachy", "Chroma Darkbringer", 
-		"Chroma Lightbringer", "Chroma Luger", "Chroma Candleflame", 
-		"Chroma Laser", "Chroma Shark", "Chroma Slasher", "Chroma Heat", 
-		"Chroma Seer", "Chroma Gingerblade", "Chroma Tides", 
-		"Chroma Saw", "Chroma Boneblade","Logchoper","Blaster"
+"Traveler's Gun", "Evergun", "Constellation", "Evergreen",
+"Alienbeam", "Turkey", "Raygun", "Vampire's Gun",
+"Darkshot", "Darksword", "Blossom", "Sakura", "Sunrise",
+"Bauble", "Snowcannon", "Soul", "Sunset", "Spirit",
+"Rainbow Gun", "Flora", "Rainbow", "Xenoknife", "Xenoshot",
+"Bloom",
+
+"Batwing", "Black Luger", "Heart Wand", "Blizzard",
+"Snowstorm", "Ocean", "Waves", "Flowerwood Gun", "Flowerwood",
+"Snow Dagger", "Watergun", "Icecream", "Treat", "Sweet",
+"Borealis", "Australis", "Bat", "Beachy", "Sands",
+"Pearlshine", "Candy", "Ornament", "Pearl", "Heartblade",
+
+"Phantom", "Red Luger", "Spectre", "Candleflame",
+"Darkbringer", "Elderwood Blade", "Elderwood Revolver",
+"Iceblaster", "Makeshift", "Lightbringer", "Sugar",
+"Green Luger", "Amerilaser", "Laser", "Hallowgun",
+"Nightblade", "Shark",
+
+"Icebeam", "Luger", "Plasmabeam", "Swirly Gun",
+"Battleaxe II", "Blaster", "Ginger Luger", "Pixel",
+"Gemstone", "Iceflake", "Old Glory", "Plasmablade",
+"Slasher", "Vampire's Edge", "Cookiecane", "Deathshard",
+"Eternalcane", "Gingerblade", "Jinglegun", "Lugercane",
+"Minty", "Nebula", "Virtual", "Battleaxe", "Gingermint",
+"Swirly Blade", "Chill", "Clockwork", "Fang", "Frostsaber",
+"Heat", "Spider", "Tides",
+
+"Bioblade", "Eternal III", "Eternal IV", "Hallow's Blade",
+"Hallow's Edge", "Handsaw", "Boneblade", "Eternal",
+"Eternal II", "Frostbite", "Ghostblade", "Ice Dragon",
+"Ice Shard", "Prismatic", "Pumpking", "Saw", "Xmas",
+"Eggblade", "Flames", "Snowflake", "Winter's Edge",
+"Peppermint", "Cookieblade", "Blue Seer", "Purple Seer",
+"Red Seer", "Seer", "Orange Seer", "Yellow Seer",
+
+-- Ancient
+"Gingerscope", "Traveler's Axe", "Celestial", "Vampire's Axe",
+"Harvester", "Icepiercer", "Icebreaker", "Elderwood Scythe",
+"Swirly Axe", "Hallowscythe", "Logchopper", "Icewing",
+
+-- Chroma
+"C. Traveler's Gun", "Chroma Evergun", "Chroma Evergreen",
+"Chroma Bauble", "C. Constellation", "C. Vampire's Gun",
+"Chroma Alienbeam", "Chroma Raygun", "Chroma Sunrise",
+"Chroma Snowcannon", "Chroma Sunset", "Chroma Blizzard",
+"Chroma Snowstorm", "Chroma Heart Wand", "Chroma Watergun",
+"Chroma Snow Dagger", "Chroma Ornament", "Chroma Treat",
+"Chroma Icecream", "Chroma Sweet", "Chroma Sands",
+"Chroma Beachy",
+
+"Chroma Darkbringer", "Chroma Lightbringer", "Chroma Luger",
+"Chroma Candleflame", "Chroma Laser", "C. Elderwood Blade",
+"Chroma Deathshard", "Chroma Swirly Gun", "Chroma Cookiecane",
+"Chroma Fang", "Chroma Gemstone", "Chroma Shark",
+"Chroma Slasher", "Chroma Heat", "Chroma Seer",
+"Chroma Gingerblade", "Chroma Tides", "Chroma Saw",
+"Chroma Boneblade"
 
 }
 
@@ -2155,22 +2180,6 @@ local function _isSpawnerAllowed(entryName)
 	local stripped = string.gsub(n, "^chroma ", "")
 	return SpawnerAllowSet[stripped] == true
 end
-
-local EvoPrefixes = {
-	Blue = true, Bronze = true, Silver = true, Gold = true, Golden = true,
-	Platinum = true, Diamond = true, Emerald = true, Ruby = true,
-	Obsidian = true, Crystal = true, Crystaline = true, Crystalline = true,
-	Red = true, Orange = true, Yellow = true, Green = true,
-	Purple = true, Pink = true, Black = true, White = true,
-	Cyan = true, Magenta = true, Aqua = true, Teal = true, Lime = true,
-	Maroon = true, Navy = true, Coral = true, Mint = true,
-	Brown = true, Tan = true, Gray = true, Grey = true,
-	Steel = true, Iron = true, Copper = true, Brass = true,
-	Iridium = true, Tungsten = true, Onyx = true, Jade = true,
-	Amber = true, Sapphire = true, Topaz = true, Pearl = true,
-	Frosted = true, Frozen = true, Burning = true, Molten = true,
-	Shadow = true, Glowing = true, Toxic = true, Cursed = true,
-}
 
 local KnownEvoBases = {
 	iceblaster = true, icebreaker = true, icecrusher = true, icepicker = true,
