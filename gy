@@ -871,7 +871,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 25)
 titleLabel.Position = UDim2.new(0, 0, 0, 2)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "hii! Kisulya"
+titleLabel.Text = "Ananas Boost on tt"
 titleLabel.Font = Enum.Font.FredokaOne
 titleLabel.TextSize = 16
 titleLabel.TextColor3 = Color3.fromRGB(200, 80, 120)
@@ -2140,7 +2140,7 @@ local SpawnerAllowedBases = {
 		"Chroma Lightbringer", "Chroma Luger", "Chroma Candleflame", 
 		"Chroma Laser", "Chroma Shark", "Chroma Slasher", "Chroma Heat", 
 		"Chroma Seer", "Chroma Gingerblade", "Chroma Tides", 
-		"Chroma Saw", "Chroma Boneblade",
+		"Chroma Saw", "Chroma Boneblade","Logchoper","Blaster"
 
 }
 
