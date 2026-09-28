@@ -170,7 +170,6 @@ end
 
 local function AcceptTrade()
 	if not TradeTable then return end
-
 	if TradeTable["Player1"]["Accepted"] == true and TradeTable["Player2"]["Accepted"] == true then
 		TradeTable["Locked"] = true
 		task.wait(0.2)
